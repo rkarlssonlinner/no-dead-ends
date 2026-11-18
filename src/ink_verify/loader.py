@@ -6,18 +6,30 @@ import shutil
 import subprocess
 import tempfile
 import zipfile
+from dataclasses import dataclass
 from pathlib import Path
 
 
-def load_story(path: str) -> dict:
+@dataclass
+class LoadResult:
+    json_data: dict
+    ink_files: list[Path]
+
+    @property
+    def has_source(self) -> bool:
+        return len(self.ink_files) > 0
+
+
+def load_story(path: str) -> LoadResult:
     """Load compiled Ink JSON from various input formats.
 
-    Accepts: .ink.json, .json, .tale, .otproject, or a directory with .ink files.
+    Returns both the JSON data and any available .ink source file paths.
     """
     p = Path(path)
 
     if p.is_dir():
-        return _compile_directory(p)
+        ink_files = list(p.glob("**/*.ink"))
+        return LoadResult(_compile_directory(p), ink_files)
 
     if not p.exists():
         raise FileNotFoundError(f"File not found: {path}")
@@ -25,15 +37,19 @@ def load_story(path: str) -> dict:
     suffix = p.suffix.lower()
 
     if suffix == ".json" or p.name.endswith(".ink.json"):
-        return _load_json(p)
+        ink_dir = p.parent
+        ink_files = list(ink_dir.glob("*.ink")) if ink_dir.exists() else []
+        return LoadResult(_load_json(p), ink_files)
     elif suffix == ".tale":
-        return _load_tale(p)
+        return LoadResult(_load_tale(p), [])
     elif suffix == ".otproject":
-        return _load_otproject(p)
+        return _load_otproject_with_source(p)
     elif suffix == ".ink":
-        return _compile_ink(p)
+        ink_dir = p.parent
+        ink_files = list(ink_dir.glob("*.ink"))
+        return LoadResult(_compile_ink(p), ink_files)
     else:
-        return _load_json(p)
+        return LoadResult(_load_json(p), [])
 
 
 def _load_json(path: Path) -> dict:
@@ -58,6 +74,32 @@ def _load_tale(path: Path) -> dict:
             if raw[0:3] == b"\xef\xbb\xbf":
                 raw = raw[3:]
             return json.loads(raw)
+
+
+def _load_otproject_with_source(path: Path) -> LoadResult:
+    """Extract .ink files from .otproject, compile, return JSON + source paths."""
+    _check_inklecate()
+    tmpdir = tempfile.mkdtemp()
+    ink_files = []
+    with zipfile.ZipFile(path) as zf:
+        for name in zf.namelist():
+            if name.endswith(".ink"):
+                target = Path(tmpdir) / Path(name).name
+                with zf.open(name) as src, open(target, "wb") as dst:
+                    dst.write(src.read())
+                ink_files.append(target)
+
+    if not ink_files:
+        raise ValueError(f"No .ink files found in {path}")
+
+    main_ink = Path(tmpdir) / "main.ink"
+    if not main_ink.exists():
+        if len(ink_files) == 1:
+            main_ink = ink_files[0]
+        else:
+            raise ValueError(f"No main.ink in {path}, and multiple .ink files present")
+
+    return LoadResult(_compile_ink(main_ink), ink_files)
 
 
 def _load_otproject(path: Path) -> dict:

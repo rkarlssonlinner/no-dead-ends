@@ -13,8 +13,12 @@ PROPS = Path(__file__).parent / "properties"
 
 
 def _load_story(name: str):
+    from ink_verify.source_index import build_source_index
     with open(STORIES / name) as f:
-        return parse_story(json.load(f))
+        json_data = json.load(f)
+    ink_files = sorted(STORIES.glob("*.ink"))
+    src_index = build_source_index(ink_files) if ink_files else None
+    return parse_story(json_data, source_index=src_index)
 
 
 class TestExpressionParser:

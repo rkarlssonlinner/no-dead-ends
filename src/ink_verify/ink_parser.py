@@ -268,7 +268,13 @@ def _find_story_node(cnode: CNode, registered: set[str]) -> str | None:
 # Main parser
 # ---------------------------------------------------------------------------
 
-def parse_story(json_data: dict) -> StoryGraph:
+def parse_story(json_data: dict, source_index=None) -> StoryGraph:
+    """Parse compiled Ink JSON into a StoryGraph.
+
+    If source_index (a SourceIndex from .ink files) is provided, use it
+    to correct variable types — the compiled JSON loses string vs int
+    distinction.
+    """
     root = json_data.get("root")
     if not isinstance(root, list) or len(root) < 2:
         raise ValueError("Invalid Ink JSON: 'root' must be a non-empty array")
@@ -280,6 +286,16 @@ def parse_story(json_data: dict) -> StoryGraph:
     variables: dict[str, VarDecl] = {}
     if "global decl" in tree.named:
         _parse_global_decl(tree.named["global decl"].content, variables)
+
+    # Phase 2b: Correct variable types from source if available
+    if source_index:
+        for vname, vdecl in list(variables.items()):
+            src_type = source_index.var_type(vname)
+            if src_type and src_type != vdecl.var_type:
+                if src_type == VarType.STRING:
+                    variables[vname] = VarDecl(vname, VarType.STRING, "")
+                elif src_type == VarType.BOOL:
+                    variables[vname] = VarDecl(vname, VarType.BOOL, bool(vdecl.initial_value))
 
     # Phase 3: Register story nodes (knots, stitches, gathers)
     nodes: dict[str, StoryNode] = {}
