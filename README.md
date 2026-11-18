@@ -6,26 +6,29 @@ Formal verification for Ink interactive fiction. Proves properties across all po
 
 ```bash
 pip install .
-ink-verify your-story.ink.json
+ink-verify my-story.tale
 ```
 
-That's it. With no config, ink-verify checks every knot is reachable, there are no dead ends, and numeric variables stay non-negative. It prints PASS/FAIL for each check.
+That's it. ink-verify extracts the compiled story from your `.tale` and checks every knot is reachable, there are no dead ends, and numeric variables stay non-negative.
+
+The `.tale` is the same package your editor builds when you save or publish — `story/main.ink.json` inside the ZIP. No extra compile step.
 
 ## Workflow
 
 ```
-1. Write your story             your-story.ink
-2. Compile it                   inklecate -o story.ink.json your-story.ink
-3. Verify it                    ink-verify story.ink.json
-4. Fix what it finds            (edit your .ink, recompile, re-verify)
+1. Write your story in the editor
+2. Save / export your .tale
+3. ink-verify my-story.tale
+4. Fix what it finds, repeat
 ```
 
-Or skip step 2 — ink-verify also accepts `.tale` packages, `.otproject` files, and directories with `.ink` files:
+ink-verify also accepts other inputs:
 
 ```bash
-ink-verify my-story.tale          # extracts compiled JSON from .tale ZIP
-ink-verify my-story.otproject     # extracts .ink, compiles, verifies
-ink-verify story/                 # compiles main.ink in directory
+ink-verify my-story.tale          # .tale package (primary workflow)
+ink-verify my-story.otproject     # project file (extracts .ink, compiles, verifies)
+ink-verify story/main.ink.json    # compiled Ink JSON directly
+ink-verify story/                 # directory with .ink files (compiles with inklecate)
 ```
 
 ## What it checks (auto-detect)
