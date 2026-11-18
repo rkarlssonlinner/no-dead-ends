@@ -6,20 +6,14 @@ ink-verify needs both your `.ink` source and the compiled JSON. The source gives
 
 ## Quick start
 
-If you have a directory with `.ink` files:
-
 ```bash
 pip install .
-ink-verify story/
-```
-
-If you have compiled JSON (from inklecate, Inky, inkjs, or ink-unity-integration), point `--source` to your `.ink` files:
-
-```bash
 ink-verify story.ink.json --source story/
 ```
 
-Offtrail Tales packages work too:
+Supply both: the compiled JSON (from inklecate, Inky, inkjs, or any Ink compiler) and `--source` pointing to your `.ink` files.
+
+For Offtrail Tales:
 
 ```bash
 ink-verify my-story.tale --source story/
