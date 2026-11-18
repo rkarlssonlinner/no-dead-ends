@@ -162,6 +162,39 @@ ink-verify — TheIntercept.json (282 knots, 21 variables)
 
 If coverage is below 100%, the unresolved edges are listed as warnings. The results are still valid for the parts that were analyzed — a FAIL is a real problem, a PASS holds for the resolved graph.
 
+## Real-world example
+
+Running ink-verify on a 40-knot Offtrail Tales story with 9 variables:
+
+```
+ink-verify my-story.tale
+
+ink-verify — my-story.tale (40 knots, 9 variables)
+
+  [PASS] radio reachable
+  [PASS] flat reachable
+  [PASS] signup reachable
+  ...
+  [PASS] no dead ends
+  [FAIL] told_noor >= 0
+         Invariant 'told_noor >= 0' violated
+  [FAIL] hearing >= 0
+         Invariant 'hearing >= 0' violated
+
+38 passed, 5 failed
+```
+
+**What it caught:** two variables that go negative on some playthrough. These could be real bugs (an off-by-one in a counter) or intentional design (using -1 as a flag). Either way, the author now knows and can check.
+
+**What it flagged but isn't a real problem:** three internal choice containers (`leak.c-0.b`, `act3.c-0.b`) reported as unreachable. These are parser artifacts from how Ink compiles choice content — not actual dead content. When you see `c-0`, `c-1` in a node name, it's a choice container internals, not a knot you wrote.
+
+**How to read the output:**
+
+- **PASS** — Z3 proved this holds across all possible playthroughs. No exceptions.
+- **FAIL with "no incoming edges"** — provably unreachable. Nothing connects to it. If it's a `c-*` node, ignore it. If it's a knot you wrote, it's orphaned content.
+- **FAIL with "has N incoming edges, review manually"** — the tool can't trace a full path, but edges exist. Usually a parser limitation with deeply nested compiled JSON, not a real problem. Check it yourself.
+- **FAIL on an invariant** — a specific playthrough violates the condition. Use `--verbose` to see the path and variable values that cause it.
+
 ## Supported Ink features
 
 Knots, stitches, diverts, choices (once-only and sticky), fallback choices, global variables and assignments, conditional choices, arithmetic and comparison operators, gather points, tunnels, Ink functions (detected and excluded from reachability).
