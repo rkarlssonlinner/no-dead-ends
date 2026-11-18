@@ -1,6 +1,6 @@
 # ink-verify
 
-Formal verification for Ink interactive fiction. Proves properties across all possible playthroughs using the Z3 SMT solver. Passes are true negatives. Failures are a mixture of true and false positives for human review.
+Formal verification for Ink interactive fiction. Proves properties across all possible playthroughs using the Z3 SMT solver. Passes are true negatives. Failures are a mixture of true and false positives for human review. Although imperfect, this reduces the need for brute-force tracing or human review of all paths.
 
 ink-verify needs both your `.ink` source and the compiled JSON. The source gives accurate variable types (the compiled bytecode loses the difference between strings, booleans, and integers). The compiled JSON gives the runtime graph that Z3 verifies.
 
@@ -176,9 +176,18 @@ ink-verify story.ink.json --source story/ --json
 | Story | Author knots | Variables | Result |
 |-------|-------------|-----------|--------|
 | Own story (Offtrail Tales) | 28 | 9 | 29 passed, 0 failed |
-| [The Intercept](https://github.com/inkle/the-intercept) by inkle | 60 | 21 | 46 passed, 17 failed |
+| [The Intercept](https://github.com/inkle/the-intercept) by inkle | 60 | 21 | 45 passed, 18 failed |
 
-On The Intercept, the 17 failures break down as: 14 stitches where the graph chain is incomplete (review manually), 2 real variable bugs (`forceful` and `evasive` go negative), and 1 dead end. The 283 compiler-generated internal nodes were skipped.
+Breakdown of The Intercept's 18 failures:
+
+| Count | Type | Verdict | Explanation |
+|-------|------|---------|-------------|
+| 15 | Stitch reachability | Review manually | Graph chain incomplete — edges exist but the solver can't trace a full path through compiled bytecode |
+| 1 | Dead end | Review manually | Dead end detected at `start` |
+| 1 | `forceful >= 0` | True positive | Integer variable decremented 12 times without a floor check — certain playthroughs push it below zero |
+| 1 | `evasive >= 0` | False positive | Flagged, but the source shows `evasive` is never decremented — encoder limitation |
+
+174 compiler-generated internal nodes were skipped. 45 checks passed.
 
 When ink-verify can't fully trace an internal path, it says so and reports a coverage metric. A PASS is proven. A FAIL names the reason — check whether it's a real problem or a parser limitation.
 
