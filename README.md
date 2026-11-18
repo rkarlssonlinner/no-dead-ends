@@ -180,16 +180,14 @@ ink-verify story.ink.json --source story/ --json
 
 Breakdown of The Intercept's 18 failures:
 
-| Count | Type | Verdict | Explanation |
-|-------|------|---------|-------------|
-| 15 | Stitch reachability | Review manually | Graph chain incomplete — edges exist but the solver can't trace a full path through compiled bytecode |
-| 1 | Dead end | Review manually | Dead end detected at `start` |
-| 1 | `forceful >= 0` | True positive | Integer variable decremented 12 times without a floor check — certain playthroughs push it below zero |
-| 1 | `evasive >= 0` | False positive | Flagged, but the source shows `evasive` is never decremented — encoder limitation |
+| Count | What it means |
+|-------|---------------|
+| 15 | Couldn't verify — check these instead of all 60 |
+| 1 | Dead end detected |
+| 1 | True positive: `forceful` goes negative (integer decremented without a floor check) |
+| 1 | False positive: `evasive >= 0` flagged, but `evasive` is never decremented |
 
-174 compiler-generated internal nodes were skipped. 45 checks passed.
-
-When ink-verify can't fully trace an internal path, it says so and reports a coverage metric. A PASS is proven. A FAIL names the reason — check whether it's a real problem or a parser limitation.
+The tool checked 60 author-written knots, cleared 45, and narrowed the remaining work to 18 items for human review. 174 compiler-generated nodes were skipped entirely.
 
 ## Real-world example
 
