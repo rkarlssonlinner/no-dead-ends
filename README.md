@@ -2,7 +2,13 @@
 
 Formal verification for Ink interactive fiction. Proves properties across all possible playthroughs using the Z3 SMT solver.
 
-ink-verify works on the compiled Ink JSON that every Ink tool produces — inklecate, inkjs, Inky, ink-unity-integration, and the offtrail editor all output the same format. If you have a `.tale`, `.otproject`, or raw `.ink` files, ink-verify handles those too.
+ink-verify works on the compiled Ink JSON that every Ink tool produces — the format is the same regardless of editor or compiler. It can also compile raw `.ink` for you, and extract stories from package files.
+
+Supported inputs by feature:
+
+- **Compiled JSON** (direct, no extra tools needed): output from inklecate, Inky, inkjs, ink-unity-integration, or any tool that compiles `.ink` to `.json`
+- **Package files** (extracted automatically): Offtrail Tales `.tale`, Offtrail Tales `.otproject`
+- **Raw `.ink` source** (compiled automatically, requires inklecate on PATH): single files or directories
 
 ## Quick start
 
