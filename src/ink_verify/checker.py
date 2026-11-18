@@ -173,12 +173,16 @@ def _check_reachable(em: EncodedModel, name: str, knot: str) -> Verdict:
     em.solver.add(em.reach[knot] == True)
     result = em.solver.check()
     if result == z3.sat:
-        path = _extract_path(em)
         em.solver.pop()
         return Verdict(name, "reachable", True)
     else:
         em.solver.pop()
-        return Verdict(name, "reachable", False, reason=f"'{knot}' is unreachable from entry")
+        incoming = em.graph.incoming(knot)
+        if incoming:
+            return Verdict(name, "reachable", False,
+                           reason=f"'{knot}' has {len(incoming)} incoming edges but no verified path "
+                                  f"— graph chain may be incomplete (review manually)")
+        return Verdict(name, "reachable", False, reason=f"'{knot}' is unreachable — no incoming edges")
 
 
 def _check_no_dead_ends(em: EncodedModel, name: str) -> Verdict:
