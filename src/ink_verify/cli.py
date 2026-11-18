@@ -51,7 +51,13 @@ def _output_human(path: str, graph, verdicts: list[Verdict], verbose: bool):
     knot_count = len([n for n in graph.nodes.values()
                       if n.kind.value in ("knot", "stitch")])
     var_count = len(graph.variables)
+    dropped = getattr(graph, "_dropped_edges", 0)
+    total_edges = len(graph.edges) + dropped
+
     click.echo(f"ink-verify — {path} ({knot_count} knots, {var_count} variables)")
+    if dropped:
+        pct = len(graph.edges) / total_edges * 100 if total_edges else 100
+        click.echo(f"  coverage: {pct:.0f}% of edges resolved ({dropped} unresolved — results may be incomplete)")
     click.echo()
 
     passed = 0
@@ -100,10 +106,17 @@ def _output_json(path: str, graph, verdicts: list[Verdict]):
                 }
         results.append(entry)
 
+    dropped = getattr(graph, "_dropped_edges", 0)
+    total_edges = len(graph.edges) + dropped
+    coverage = len(graph.edges) / total_edges * 100 if total_edges else 100
+
     output = {
         "story": path,
         "knots": knot_count,
         "variables": list(graph.variables.keys()),
+        "coverage": round(coverage, 1),
+        "edges_resolved": len(graph.edges),
+        "edges_dropped": dropped,
         "results": results,
     }
     click.echo(json.dumps(output, indent=2))

@@ -276,38 +276,33 @@ def parse_story(json_data: dict) -> StoryGraph:
     if "global decl" in tree.named:
         _parse_global_decl(tree.named["global decl"].content, variables)
 
-    # Phase 3: Find entry point
-    entry_node = ""
-    first_container = tree.positional.get(0)
-    if first_container:
-        for item in first_container.content:
-            if isinstance(item, dict) and "->" in item and not item.get("var"):
-                entry_node = item["->"]
-                break
-
-    # Phase 4: Register story nodes (knots, stitches, gathers)
+    # Phase 3: Register story nodes (knots, stitches, gathers)
     nodes: dict[str, StoryNode] = {}
-    cnode_to_id: dict[int, str] = {}  # id(CNode) → node_id
+    cnode_to_id: dict[int, str] = {}
 
-    def register(cnode: CNode, kind: NodeKind) -> str:
-        nid = _node_id_for(cnode)
-        if nid not in nodes:
-            nodes[nid] = StoryNode(nid, kind)
-        cnode_to_id[id(cnode)] = nid
-        return nid
-
-    # Register knots
     for key, child in tree.named.items():
         if key == "global decl" or key.startswith("#"):
             continue
-        register(child, NodeKind.KNOT)
+        nid = _node_id_for(child)
+        if nid not in nodes:
+            nodes[nid] = StoryNode(nid, NodeKind.KNOT)
+        cnode_to_id[id(child)] = nid
         _register_descendants(child, nodes, cnode_to_id)
+
+    # Phase 4: Find entry point — scan initial content for all diverts to knots
+    knot_names = set(nodes.keys())
+    entry_node = _find_entry(tree, knot_names)
 
     # Phase 5: Walk containers to extract edges
     edges: list[StoryEdge] = []
-    tunnel_returns: dict[str, str] = {}  # knot_id → continuation_node_id
-
+    tunnel_returns: dict[str, str] = {}
     registered_ids = set(nodes.keys())
+
+    # Walk initial content for edges (root[0] container)
+    init_cnode = tree.positional.get(0)
+    if init_cnode:
+        _extract_edges(init_cnode, entry_node or "__ROOT__", tree, nodes,
+                        cnode_to_id, edges, variables, tunnel_returns, registered_ids)
 
     for key, knot_cnode in tree.named.items():
         if key == "global decl" or key.startswith("#"):
@@ -322,16 +317,49 @@ def parse_story(json_data: dict) -> StoryGraph:
 
     # Clean up edges with unresolvable targets
     valid_edges = []
+    dropped = 0
     for e in edges:
         if e.target not in nodes:
-            log.warning("Edge %s: target '%s' not in nodes", e.edge_id or "?", e.target)
+            dropped += 1
         else:
             valid_edges.append(e)
+
+    if dropped:
+        log.info("Dropped %d edges with unresolvable targets (%d edges kept)",
+                  dropped, len(valid_edges))
 
     if not entry_node:
         entry_node = next(iter(nodes), "")
 
-    return StoryGraph(nodes, valid_edges, variables, entry_node)
+    graph = StoryGraph(nodes, valid_edges, variables, entry_node)
+    graph._dropped_edges = dropped  # type: ignore[attr-defined]
+    return graph
+
+
+def _find_entry(tree: CNode, knot_names: set[str]) -> str:
+    """Find the story entry point by scanning initial content for the first
+    divert that targets a registered knot."""
+    def _scan(obj: object) -> str:
+        if isinstance(obj, list):
+            for item in obj:
+                result = _scan(item)
+                if result:
+                    return result
+        elif isinstance(obj, dict):
+            if "->" in obj and not obj.get("var") and not obj.get("c"):
+                target = obj["->"]
+                if target in knot_names:
+                    return target
+            for val in obj.values():
+                result = _scan(val)
+                if result:
+                    return result
+        return ""
+
+    init = tree.positional.get(0)
+    if init:
+        return _scan(init.content)
+    return ""
 
 
 def _register_descendants(cnode: CNode, nodes: dict, cnode_to_id: dict) -> None:
