@@ -41,6 +41,9 @@ class SourceIndex:
     variables: dict[str, VarInfo] = field(default_factory=dict)
     knots: dict[str, KnotInfo] = field(default_factory=dict)
     mutations: dict[str, list[MutationSite]] = field(default_factory=dict)
+    list_names: set[str] = field(default_factory=set)
+    list_values: set[str] = field(default_factory=set)
+    functions: set[str] = field(default_factory=set)
 
     def var_type(self, name: str) -> VarType | None:
         info = self.variables.get(name)
@@ -58,7 +61,9 @@ class SourceIndex:
 
 
 _VAR_DECL = re.compile(r"^\s*VAR\s+(\w+)\s*=\s*(.+)$")
+_LIST_DECL = re.compile(r"^\s*LIST\s+(\w+)\s*=")
 _KNOT = re.compile(r"^={2,}\s*(?:function\s+)?(\w+)(?:\s*\(.*\))?\s*={0,}$")
+_FUNC_KNOT = re.compile(r"^={2,}\s*function\s+(\w+)")
 _STITCH = re.compile(r"^=\s+(\w+)(?:\s*\(.*\))?\s*$")
 _MUTATION = re.compile(r"^\s*~\s*(\w+)\s*([+\-*/]?=)\s*(.+)$")
 _MUTATION_INC = re.compile(r"^\s*~\s*(\w+)(\+\+|--)$")
@@ -80,12 +85,28 @@ def build_source_index(ink_files: list[Path]) -> SourceIndex:
             if not stripped or stripped.startswith("//"):
                 continue
 
+            m = _LIST_DECL.match(stripped)
+            if m:
+                list_name = m.group(1)
+                index.list_names.add(list_name)
+                # Extract list values: LIST Foo = val1, val2, (val3)
+                after_eq = stripped.split("=", 1)[1] if "=" in stripped else ""
+                for val in after_eq.split(","):
+                    val = val.strip().strip("()")
+                    if val and val.isidentifier():
+                        index.list_values.add(val)
+                continue
+
             m = _VAR_DECL.match(stripped)
             if m:
                 name, val_str = m.group(1), m.group(2).strip()
-                vtype = _infer_type(val_str)
+                vtype = _infer_type(val_str, index.list_values)
                 index.variables[name] = VarInfo(name, vtype, val_str, rel, lineno)
                 continue
+
+            m = _FUNC_KNOT.match(stripped)
+            if m:
+                index.functions.add(m.group(1))
 
             m = _KNOT.match(stripped)
             if m:
@@ -116,7 +137,7 @@ def build_source_index(ink_files: list[Path]) -> SourceIndex:
     return index
 
 
-def _infer_type(val_str: str) -> VarType:
+def _infer_type(val_str: str, known_list_values: set[str] | None = None) -> VarType:
     val = val_str.rstrip().rstrip(";").strip()
     if val.startswith('"') or val.startswith("'"):
         return VarType.STRING
@@ -124,6 +145,12 @@ def _infer_type(val_str: str) -> VarType:
         return VarType.BOOL
     if val.startswith("->"):
         return VarType.STRING  # divert target — not numeric
+    if val in ("NONE", "none"):
+        return VarType.STRING  # LIST empty value — not numeric
+    if val.startswith("(") and val.endswith(")"):
+        return VarType.STRING  # LIST multi-value — not numeric
+    if known_list_values and val in known_list_values:
+        return VarType.STRING  # known LIST value — not numeric
     try:
         int(val)
         return VarType.INT
@@ -134,4 +161,7 @@ def _infer_type(val_str: str) -> VarType:
         return VarType.INT
     except ValueError:
         pass
-    return VarType.INT  # default: treat as int (could be a constant reference)
+    # Uppercase identifier likely a CONST or LIST value
+    if val.isidentifier() and val[0].isupper():
+        return VarType.STRING
+    return VarType.INT
