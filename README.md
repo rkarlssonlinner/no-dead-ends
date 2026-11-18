@@ -34,19 +34,27 @@ Results are written to `results/`. The committed results match what the script p
 ## Workflow
 
 ```
-1. Write your story in an editor
-2. Save / export your .tale
+1. Write your story in an editor (Inky, VS Code, etc.)
+2. Compile it (inklecate, Inky export, or your build tool)
+3. ink-verify story.ink.json --source story/
+4. Fix what it finds, repeat
+```
+
+For Offtrail Tales:
+
+```
+1. Write your story in the editor
+2. Save / export your .tale or .otproject
 3. ink-verify my-story.tale --source story/
 4. Fix what it finds, repeat
 ```
 
-ink-verify also accepts other inputs — always supply `--source` alongside:
+Always supply both compiled JSON and `--source` pointing to your `.ink` files:
 
 ```bash
-ink-verify my-story.tale --source story/          # .tale + source directory
-ink-verify my-story.otproject                      # .otproject contains both
-ink-verify story/main.ink.json --source story/     # compiled JSON + source
-ink-verify story/                                  # directory with .ink files
+ink-verify story.ink.json --source story/     # compiled JSON + source (primary)
+ink-verify my-story.tale --source story/      # .tale + source directory
+ink-verify my-story.otproject                 # .otproject contains both
 ```
 
 ## What counts as input
