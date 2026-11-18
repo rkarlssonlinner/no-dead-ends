@@ -243,4 +243,8 @@ npm install -g inklecate
 
 ## License
 
-MIT
+MIT. See [LICENSE](LICENSE).
+
+All test stories are original. No third-party Ink stories or reference material are shipped.
+
+Runtime dependencies (installed by pip, not bundled): z3-solver (MIT), pyyaml (MIT), click (BSD-3-Clause).
