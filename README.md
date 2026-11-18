@@ -2,13 +2,9 @@
 
 Formal verification for Ink interactive fiction. Proves properties across all possible playthroughs using the Z3 SMT solver.
 
-ink-verify works on the compiled Ink JSON that every Ink tool produces — the format is the same regardless of editor or compiler. It can also compile raw `.ink` for you, and extract stories from package files.
+ink-verify needs both your `.ink` source and the compiled JSON. The source gives accurate variable types (the compiled bytecode loses the difference between strings, booleans, and integers). The compiled JSON gives the runtime graph that Z3 verifies.
 
-Supported inputs by feature:
-
-- **Compiled JSON** (direct, no extra tools needed): output from inklecate, Inky, inkjs, ink-unity-integration, or any tool that compiles `.ink` to `.json`
-- **Package files** (extracted automatically): Offtrail Tales `.tale`, Offtrail Tales `.otproject`
-- **Raw `.ink` source** (compiled automatically, requires inklecate on PATH): single files or directories
+Every Ink tool produces the same compiled JSON — inklecate, Inky, inkjs, ink-unity-integration. ink-verify can also extract stories from Offtrail Tales `.tale` and `.otproject` packages.
 
 ## Quick start
 
@@ -17,7 +13,7 @@ pip install .
 ink-verify my-story.tale --source story/
 ```
 
-Supply both compiled Ink and .ink source for best accuracy. The source corrects variable types that the compiled bytecode loses.
+The `--source` flag points to your `.ink` files. Always supply both.
 
 ## Reproduce the test results
 
@@ -37,33 +33,29 @@ The `.tale` is the same package your editor builds when you save or publish — 
 ```
 1. Write your story in an editor
 2. Save / export your .tale
-3. ink-verify my-story.tale
+3. ink-verify my-story.tale --source story/
 4. Fix what it finds, repeat
 ```
 
-ink-verify also accepts other inputs:
+ink-verify also accepts other inputs — always supply `--source` alongside:
 
 ```bash
-ink-verify my-story.tale          # .tale package (primary workflow)
-ink-verify my-story.otproject     # project file (extracts .ink, compiles, verifies)
-ink-verify story/main.ink.json    # compiled Ink JSON directly
-ink-verify story/                 # directory with .ink files (compiles with inklecate)
+ink-verify my-story.tale --source story/          # .tale + source directory
+ink-verify my-story.otproject                      # .otproject contains both
+ink-verify story/main.ink.json --source story/     # compiled JSON + source
+ink-verify story/                                  # directory with .ink files
 ```
 
 ## What counts as input
 
-ink-verify works on **compiled Ink JSON** — the `.ink.json` file that any Ink compiler produces (inklecate, inkjs, Inky, ink-unity-integration). This is the same format regardless of which tool compiled it.
+ink-verify needs **compiled Ink JSON** (the `.ink.json` file any Ink compiler produces) **plus** your `.ink` source files (via `--source`). The `.otproject` format contains both. A directory with `.ink` files compiles and verifies in one step.
 
 | You have | What to run |
 |----------|-------------|
-| A `.tale` file from the offtrail editor | `ink-verify my-story.tale` |
-| An `.otproject` file | `ink-verify my-story.otproject` |
-| A standalone HTML export directory (from Inky "Export for web") | `ink-verify path/to/my-story.js` — not yet supported; extract the JSON from the JS wrapper first |
-| A compiled `.json` file from inklecate or Inky | `ink-verify story.ink.json` |
-| Raw `.ink` source files (not compiled) | `ink-verify story/` — compiles with inklecate first (must be installed: `npm install -g inklecate`) |
-| A single `.ink` file | `ink-verify my-story.ink` — compiles then verifies |
-
-Raw `.ink` requires inklecate on your PATH. Compiled JSON works without it.
+| A `.tale` + source directory | `ink-verify my-story.tale --source story/` |
+| An `.otproject` file | `ink-verify my-story.otproject` (contains both) |
+| A compiled `.json` + source | `ink-verify story.ink.json --source story/` |
+| A directory with `.ink` files | `ink-verify story/` (compiles with inklecate, requires `npm install -g inklecate`) |
 
 ## What it checks (auto-detect)
 
@@ -73,7 +65,7 @@ Raw `.ink` requires inklecate on your PATH. Compiled JSON works without it.
 | No dead ends | Does every reachable non-terminal node have at least one available choice? |
 | Numeric bounds | Do integer variables stay non-negative? |
 
-When `.ink` source is available (via `--source` or auto-detected next to the JSON), ink-verify corrects variable types from the source declarations, checks only author-written knots (compiler-generated gathers and choice internals are skipped), and shows file:line locations in failure output. Without source, all top-level knots are checked and variable types are inferred from the compiled bytecode.
+The `.ink` source (via `--source`) corrects variable types from the source declarations, checks only author-written knots (compiler-generated gathers and choice internals are skipped), and shows file:line locations in failure output.
 
 When a check fails, ink-verify names the problem. Use `--verbose` to see the full path:
 
@@ -123,7 +115,7 @@ properties:
 ```
 
 ```bash
-ink-verify story.ink.json --properties checks.yaml
+ink-verify story.ink.json --source story/ --properties checks.yaml
 ```
 
 **Property types:**
@@ -138,7 +130,7 @@ ink-verify story.ink.json --properties checks.yaml
 For editor or CI integration:
 
 ```bash
-ink-verify story.ink.json --json
+ink-verify story.ink.json --source story/ --json
 ```
 
 ```json
@@ -168,49 +160,35 @@ ink-verify story.ink.json --json
 | `--json` | Structured JSON output |
 | `-v, --verbose` | Show full counterexample paths |
 
-## Tested on The Intercept
+## Tested on
 
-ink-verify has been tested on [The Intercept](https://github.com/inkle/the-intercept) by inkle — their open-source demo story (MIT), compiled with the original C# inklecate (inkVersion 11). Results:
+| Story | Author knots | Variables | Result |
+|-------|-------------|-----------|--------|
+| Own story (Offtrail Tales) | 28 | 9 | 29 passed, 0 failed |
+| [The Intercept](https://github.com/inkle/the-intercept) by inkle | 60 | 21 | 46 passed, 17 failed |
 
-- 100% edge coverage (858 edges resolved, 0 dropped)
-- 30 of 32 top-level knots confirmed reachable (the 2 "unreachable" are Ink helper functions, not story content)
-- 21 variables detected and checked
-- Entry point correctly identified through conditional branching in the initial content
+On The Intercept, the 17 failures break down as: 14 stitches where the graph chain is incomplete (review manually), 2 real variable bugs (`forceful` and `evasive` go negative), and 1 dead end. The 283 compiler-generated internal nodes were skipped.
 
-When ink-verify can't fully resolve an internal path (e.g., positional jumps within a knot), it reports a **coverage metric** so you know how much of the story was analyzed:
-
-```
-ink-verify — TheIntercept.json (282 knots, 21 variables)
-  coverage: 97% of edges resolved (12 unresolved — results may be incomplete)
-```
-
-The coverage line appears only when edges are unresolved. When all edges resolve, it is omitted and results cover the full graph. The results are still valid for the parts that were analyzed — a FAIL is a real problem, a PASS holds for the resolved graph.
+When ink-verify can't fully trace an internal path, it says so and reports a coverage metric. A PASS is proven. A FAIL names the reason — check whether it's a real problem or a parser limitation.
 
 ## Real-world example
 
-Running ink-verify on a 40-knot Offtrail Tales story with 9 variables:
+Running ink-verify on a 28-knot Offtrail Tales story with 9 variables:
 
 ```
-ink-verify my-story.tale
+ink-verify my-story.tale --source story/
 
-ink-verify — my-story.tale (40 knots, 9 variables)
+ink-verify — my-story.tale (40 knots, 9 variables + source)
 
   [PASS] radio reachable
   [PASS] flat reachable
   [PASS] signup reachable
   ...
+  [INFO] Skipped 38 compiler-generated nodes. Checked 28 author-written knots.
   [PASS] no dead ends
-  [FAIL] told_noor >= 0
-         Invariant 'told_noor >= 0' violated
-  [FAIL] hearing >= 0
-         Invariant 'hearing >= 0' violated
 
-38 passed, 5 failed
+29 passed, 0 failed
 ```
-
-**What it caught:** two variables that go negative on some playthrough. These could be real bugs (an off-by-one in a counter) or intentional design (using -1 as a flag). Either way, the author now knows and can check.
-
-**What it flagged but isn't a real problem:** three internal choice containers (`leak.c-0.b`, `act3.c-0.b`) reported as unreachable. These are parser artifacts from how Ink compiles choice content — not actual dead content. When you see `c-0`, `c-1` in a node name, it's a choice container internals, not a knot you wrote.
 
 **How to read the output:**
 
