@@ -1,0 +1,166 @@
+{
+  "inkVersion": 19,
+  "root": [
+    [
+      {
+        "->": "start"
+      },
+      [
+        "done",
+        {
+          "#n": "g-0"
+        }
+      ],
+      null
+    ],
+    "done",
+    {
+      "start": [
+        [
+          "^You have ",
+          "ev",
+          {
+            "VAR?": "gold"
+          },
+          "out",
+          "/ev",
+          "^ gold coins.",
+          "\n",
+          "ev",
+          "str",
+          "^Spend 2 gold",
+          "/str",
+          "/ev",
+          {
+            "*": ".^.c-0",
+            "flg": 20
+          },
+          "ev",
+          "str",
+          "^Spend 3 gold",
+          "/str",
+          "/ev",
+          {
+            "*": ".^.c-1",
+            "flg": 20
+          },
+          {
+            "c-0": [
+              "\n",
+              "ev",
+              {
+                "VAR?": "gold"
+              },
+              2,
+              "-",
+              "/ev",
+              {
+                "VAR=": "gold",
+                "re": true
+              },
+              {
+                "->": "stuck"
+              },
+              {
+                "#f": 5
+              }
+            ],
+            "c-1": [
+              "\n",
+              "ev",
+              {
+                "VAR?": "gold"
+              },
+              3,
+              "-",
+              "/ev",
+              {
+                "VAR=": "gold",
+                "re": true
+              },
+              {
+                "->": "stuck"
+              },
+              {
+                "#f": 5
+              }
+            ]
+          }
+        ],
+        null
+      ],
+      "stuck": [
+        [
+          "^You are in a room with two locked doors.",
+          "\n",
+          "ev",
+          "str",
+          "^Open the gold door",
+          "/str",
+          {
+            "VAR?": "gold"
+          },
+          5,
+          ">=",
+          "/ev",
+          {
+            "*": ".^.c-0",
+            "flg": 21
+          },
+          "ev",
+          "str",
+          "^Open the silver door",
+          "/str",
+          {
+            "VAR?": "gold"
+          },
+          3,
+          ">=",
+          "/ev",
+          {
+            "*": ".^.c-1",
+            "flg": 21
+          },
+          {
+            "c-0": [
+              "\n",
+              {
+                "->": "ending"
+              },
+              {
+                "#f": 5
+              }
+            ],
+            "c-1": [
+              "\n",
+              {
+                "->": "ending"
+              },
+              {
+                "#f": 5
+              }
+            ]
+          }
+        ],
+        null
+      ],
+      "ending": [
+        "^You escape!",
+        "\n",
+        "end",
+        null
+      ],
+      "global decl": [
+        "ev",
+        3,
+        {
+          "VAR=": "gold"
+        },
+        "/ev",
+        "end",
+        null
+      ]
+    }
+  ],
+  "listDefs": {}
+}

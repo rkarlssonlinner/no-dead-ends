@@ -1,0 +1,90 @@
+{
+  "inkVersion": 19,
+  "root": [
+    [
+      {
+        "->": "start"
+      },
+      [
+        "done",
+        {
+          "#n": "g-0"
+        }
+      ],
+      null
+    ],
+    "done",
+    {
+      "start": [
+        [
+          "^You stand at a crossroads.",
+          "\n",
+          "ev",
+          "str",
+          "^Go left",
+          "/str",
+          "/ev",
+          {
+            "*": ".^.c-0",
+            "flg": 20
+          },
+          "ev",
+          "str",
+          "^Go right",
+          "/str",
+          "/ev",
+          {
+            "*": ".^.c-1",
+            "flg": 20
+          },
+          {
+            "c-0": [
+              "^ ",
+              {
+                "->": "path_a"
+              },
+              "\n",
+              {
+                "#f": 5
+              }
+            ],
+            "c-1": [
+              "^ ",
+              {
+                "->": "path_b"
+              },
+              "\n",
+              {
+                "#f": 5
+              }
+            ]
+          }
+        ],
+        null
+      ],
+      "path_a": [
+        "^You take the left path through the forest.",
+        "\n",
+        {
+          "->": "merge"
+        },
+        null
+      ],
+      "path_b": [
+        "^You take the right path along the river.",
+        "\n",
+        {
+          "->": "merge"
+        },
+        null
+      ],
+      "merge": [
+        "^Both paths converge at the village.",
+        "\n",
+        "end",
+        null
+      ]
+    }
+  ],
+  "listDefs": {}
+}

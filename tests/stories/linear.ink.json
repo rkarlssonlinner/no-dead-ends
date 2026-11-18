@@ -1,0 +1,43 @@
+{
+  "inkVersion": 19,
+  "root": [
+    [
+      {
+        "->": "start"
+      },
+      [
+        "done",
+        {
+          "#n": "g-0"
+        }
+      ],
+      null
+    ],
+    "done",
+    {
+      "start": [
+        "^You wake up in a dimly lit room.",
+        "\n",
+        {
+          "->": "middle"
+        },
+        null
+      ],
+      "middle": [
+        "^You walk down a long corridor.",
+        "\n",
+        {
+          "->": "ending"
+        },
+        null
+      ],
+      "ending": [
+        "^You reach the exit. The end.",
+        "\n",
+        "end",
+        null
+      ]
+    }
+  ],
+  "listDefs": {}
+}

@@ -1,0 +1,15 @@
+properties:
+  - name: "path_a reachable"
+    type: reachable
+    knot: "path_a"
+
+  - name: "path_b reachable"
+    type: reachable
+    knot: "path_b"
+
+  - name: "merge reachable"
+    type: reachable
+    knot: "merge"
+
+  - name: "no dead ends"
+    type: no_dead_ends

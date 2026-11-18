@@ -1,0 +1,225 @@
+{
+  "inkVersion": 19,
+  "root": [
+    [
+      {
+        "->": "start"
+      },
+      [
+        "done",
+        {
+          "#n": "g-0"
+        }
+      ],
+      null
+    ],
+    "done",
+    {
+      "start": [
+        [
+          "^You have ",
+          "ev",
+          {
+            "VAR?": "gold"
+          },
+          "out",
+          "/ev",
+          "^ gold coins.",
+          "\n",
+          "ev",
+          "str",
+          "^Buy a sword (-7 gold)",
+          "/str",
+          "/ev",
+          {
+            "*": ".^.c-0",
+            "flg": 20
+          },
+          "ev",
+          "str",
+          "^Buy a key (-3 gold)",
+          "/str",
+          "/ev",
+          {
+            "*": ".^.c-1",
+            "flg": 20
+          },
+          {
+            "c-0": [
+              "\n",
+              "ev",
+              {
+                "VAR?": "gold"
+              },
+              7,
+              "-",
+              "/ev",
+              {
+                "VAR=": "gold",
+                "re": true
+              },
+              "^You bought a sword!",
+              "\n",
+              {
+                "->": "shop"
+              },
+              {
+                "#f": 5
+              }
+            ],
+            "c-1": [
+              "\n",
+              "ev",
+              {
+                "VAR?": "gold"
+              },
+              3,
+              "-",
+              "/ev",
+              {
+                "VAR=": "gold",
+                "re": true
+              },
+              "ev",
+              1,
+              "/ev",
+              {
+                "VAR=": "has_key",
+                "re": true
+              },
+              "^You bought a key!",
+              "\n",
+              {
+                "->": "shop"
+              },
+              {
+                "#f": 5
+              }
+            ]
+          }
+        ],
+        null
+      ],
+      "shop": [
+        [
+          "^You have ",
+          "ev",
+          {
+            "VAR?": "gold"
+          },
+          "out",
+          "/ev",
+          "^ gold coins.",
+          "\n",
+          "ev",
+          "str",
+          "^Buy a potion (-5 gold)",
+          "/str",
+          {
+            "VAR?": "gold"
+          },
+          5,
+          ">=",
+          "/ev",
+          {
+            "*": ".^.c-0",
+            "flg": 21
+          },
+          "ev",
+          "str",
+          "^Enter the cave",
+          "/str",
+          {
+            "VAR?": "has_key"
+          },
+          "/ev",
+          {
+            "*": ".^.c-1",
+            "flg": 21
+          },
+          "ev",
+          "str",
+          "^Leave",
+          "/str",
+          "/ev",
+          {
+            "*": ".^.c-2",
+            "flg": 20
+          },
+          {
+            "c-0": [
+              "\n",
+              "ev",
+              {
+                "VAR?": "gold"
+              },
+              5,
+              "-",
+              "/ev",
+              {
+                "VAR=": "gold",
+                "re": true
+              },
+              "^You bought a potion.",
+              "\n",
+              {
+                "->": "cave"
+              },
+              {
+                "#f": 5
+              }
+            ],
+            "c-1": [
+              "\n",
+              {
+                "->": "cave"
+              },
+              {
+                "#f": 5
+              }
+            ],
+            "c-2": [
+              "\n",
+              {
+                "->": "ending"
+              },
+              {
+                "#f": 5
+              }
+            ]
+          }
+        ],
+        null
+      ],
+      "cave": [
+        "^You explore the dark cave.",
+        "\n",
+        {
+          "->": "ending"
+        },
+        null
+      ],
+      "ending": [
+        "^Your adventure ends.",
+        "\n",
+        "end",
+        null
+      ],
+      "global decl": [
+        "ev",
+        10,
+        {
+          "VAR=": "gold"
+        },
+        0,
+        {
+          "VAR=": "has_key"
+        },
+        "/ev",
+        "end",
+        null
+      ]
+    }
+  ],
+  "listDefs": {}
+}

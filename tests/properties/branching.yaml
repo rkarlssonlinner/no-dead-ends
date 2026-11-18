@@ -1,0 +1,12 @@
+properties:
+  - name: "path_a reachable"
+    type: reachable
+    knot: "path_a"
+  - name: "path_b reachable"
+    type: reachable
+    knot: "path_b"
+  - name: "no dead ends"
+    type: no_dead_ends
+  - name: "nonexistent reachable"
+    type: reachable
+    knot: "nope"

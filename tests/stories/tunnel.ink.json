@@ -1,0 +1,96 @@
+{
+  "inkVersion": 19,
+  "root": [
+    [
+      {
+        "->": "start"
+      },
+      [
+        "done",
+        {
+          "#n": "g-0"
+        }
+      ],
+      null
+    ],
+    "done",
+    {
+      "start": [
+        "^You prepare for the journey.",
+        "\n",
+        {
+          "->t->": "crossing"
+        },
+        "^You continue onward.",
+        "\n",
+        {
+          "->": "after_tunnel"
+        },
+        null
+      ],
+      "crossing": [
+        [
+          "^You cross a narrow bridge.",
+          "\n",
+          "ev",
+          "str",
+          "^Walk carefully",
+          "/str",
+          "/ev",
+          {
+            "*": ".^.c-0",
+            "flg": 20
+          },
+          "ev",
+          "str",
+          "^Run across",
+          "/str",
+          "/ev",
+          {
+            "*": ".^.c-1",
+            "flg": 20
+          },
+          {
+            "c-0": [
+              "\n",
+              "^You step carefully across.",
+              "\n",
+              {
+                "->": ".^.^.g-0"
+              },
+              {
+                "#f": 5
+              }
+            ],
+            "c-1": [
+              "\n",
+              "^You dash across quickly.",
+              "\n",
+              {
+                "->": ".^.^.g-0"
+              },
+              {
+                "#f": 5
+              }
+            ],
+            "g-0": [
+              "ev",
+              "void",
+              "/ev",
+              "->->",
+              null
+            ]
+          }
+        ],
+        null
+      ],
+      "after_tunnel": [
+        "^You have crossed the bridge safely.",
+        "\n",
+        "end",
+        null
+      ]
+    }
+  ],
+  "listDefs": {}
+}

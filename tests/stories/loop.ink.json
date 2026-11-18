@@ -1,0 +1,109 @@
+{
+  "inkVersion": 19,
+  "root": [
+    [
+      {
+        "->": "hub"
+      },
+      [
+        "done",
+        {
+          "#n": "g-0"
+        }
+      ],
+      null
+    ],
+    "done",
+    {
+      "hub": [
+        [
+          "^You are in a room with three doors.",
+          "\n",
+          "ev",
+          "str",
+          "^Open door A",
+          "/str",
+          "/ev",
+          {
+            "*": ".^.c-0",
+            "flg": 20
+          },
+          "ev",
+          "str",
+          "^Open door B",
+          "/str",
+          "/ev",
+          {
+            "*": ".^.c-1",
+            "flg": 20
+          },
+          "ev",
+          "str",
+          "^Open door C",
+          "/str",
+          "/ev",
+          {
+            "*": ".^.c-2",
+            "flg": 20
+          },
+          {
+            "*": ".^.c-3",
+            "flg": 24
+          },
+          {
+            "c-0": [
+              "\n",
+              "^You open door A. Nothing interesting.",
+              "\n",
+              {
+                "->": "hub"
+              },
+              {
+                "#f": 5
+              }
+            ],
+            "c-1": [
+              "\n",
+              "^You open door B. A gust of wind!",
+              "\n",
+              {
+                "->": "hub"
+              },
+              {
+                "#f": 5
+              }
+            ],
+            "c-2": [
+              "\n",
+              "^You open door C. A key!",
+              "\n",
+              {
+                "->": "hub"
+              },
+              {
+                "#f": 5
+              }
+            ],
+            "c-3": [
+              {
+                "->": "fallback"
+              },
+              "\n",
+              {
+                "#f": 5
+              }
+            ]
+          }
+        ],
+        null
+      ],
+      "fallback": [
+        "^Having tried all the doors, you sit down and rest.",
+        "\n",
+        "end",
+        null
+      ]
+    }
+  ],
+  "listDefs": {}
+}

@@ -1,0 +1,9 @@
+properties:
+  - name: "start reachable"
+    type: reachable
+    knot: "start"
+  - name: "ending reachable"
+    type: reachable
+    knot: "ending"
+  - name: "no dead ends"
+    type: no_dead_ends
