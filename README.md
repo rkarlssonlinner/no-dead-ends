@@ -18,7 +18,7 @@ The `.tale` is the same package your editor builds when you save or publish — 
 ## Workflow
 
 ```
-1. Write your story in the editor
+1. Write your story in an editor
 2. Save / export your .tale
 3. ink-verify my-story.tale
 4. Fix what it finds, repeat
