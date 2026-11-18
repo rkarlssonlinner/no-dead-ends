@@ -81,7 +81,7 @@ The `.ink` source (via `--source`) corrects variable types from the source decla
 When a check fails, ink-verify names the problem. Use `--verbose` to see the full path:
 
 ```
-ink-verify — story.ink.json (5 knots, 2 variables)
+ink-verify — story.ink.json (5 knots, 2 variables + source)
 
   [PASS] start reachable
   [PASS] shop reachable
@@ -149,7 +149,7 @@ ink-verify story.ink.json --source story/ --json
   "story": "story.ink.json",
   "knots": 5,
   "variables": ["gold", "has_key"],
-  "has_source": false,
+  "has_source": true,
   "coverage": 100.0,
   "edges_resolved": 12,
   "edges_dropped": 0,
@@ -203,10 +203,10 @@ ink-verify — my-story.tale (40 knots, 9 variables + source)
 
 **How to read the output:**
 
-- **PASS** — Z3 proved this holds across all possible playthroughs. No exceptions.
-- **FAIL with "no incoming edges"** — provably unreachable. Nothing connects to it. If it's a `c-*` node, ignore it. If it's a knot you wrote, it's orphaned content.
-- **FAIL with "has N incoming edges but no verified path"** — edges exist but the solver can't trace a full path. Usually a parser limitation with deeply nested compiled JSON, not a real problem. Check it yourself.
-- **FAIL on an invariant** — a specific playthrough violates the condition. Use `--verbose` to see the path and variable values that cause it.
+- **PASS** — Z3 proved this holds across all possible playthroughs.
+- **FAIL with "no incoming edges"** — provably unreachable. Nothing connects to this knot.
+- **FAIL with "has N incoming edges but no verified path"** — edges exist but the solver can't trace a full path. Parser limitation with deeply nested compiled JSON. Review manually.
+- **FAIL on an invariant** — a specific playthrough violates the condition. Use `--verbose` to see the path.
 
 ## Supported Ink features
 
@@ -214,7 +214,7 @@ Knots, stitches, diverts, choices (once-only and sticky), fallback choices, glob
 
 ## Limitations
 
-- **Compiled JSON only**: works on the bytecode that inklecate/inkjs/Inky produce, not on `.ink` source directly (though it can call inklecate for you). Intra-knot positional jumps in deeply nested stories may map to the parent knot rather than the exact sub-node.
+- **Positional resolution**: the compiled bytecode uses positional jumps within knots that have no names. In deeply nested stories, some of these map to the parent knot rather than the exact sub-node, which can break the edge chain for certain stitches.
 - **No loop bound**: the Z3 model encodes one pass through each path; there is no configurable visit bound yet. Violations that require many loop iterations may be missed.
 - **Not yet supported**: Ink threads (`<-`), lists (`LIST`), external functions, string operations, sequences/cycles.
 
