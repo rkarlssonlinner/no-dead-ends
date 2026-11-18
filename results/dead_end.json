@@ -1,0 +1,50 @@
+{
+  "story": "tests/stories/dead_end.ink.json",
+  "knots": 3,
+  "variables": [
+    "gold"
+  ],
+  "has_source": true,
+  "coverage": 100.0,
+  "edges_resolved": 7,
+  "edges_dropped": 0,
+  "results": [
+    {
+      "name": "start reachable",
+      "type": "reachable",
+      "passed": true
+    },
+    {
+      "name": "stuck reachable",
+      "type": "reachable",
+      "passed": true
+    },
+    {
+      "name": "ending reachable",
+      "type": "reachable",
+      "passed": false,
+      "reason": "'ending' has 2 incoming edges but no verified path \u2014 graph chain may be incomplete (review manually)"
+    },
+    {
+      "name": "no dead ends",
+      "type": "no_dead_ends",
+      "passed": false,
+      "reason": "Dead end at 'stuck'",
+      "counterexample": {
+        "path": [
+          "start",
+          "stuck"
+        ],
+        "choices": [],
+        "variables_at_violation": {
+          "gold": 1
+        }
+      }
+    },
+    {
+      "name": "gold >= 0",
+      "type": "invariant",
+      "passed": true
+    }
+  ]
+}

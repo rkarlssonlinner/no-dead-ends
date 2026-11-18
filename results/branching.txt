@@ -1,0 +1,9 @@
+ink-verify — tests/stories/branching.ink.json (4 knots, 0 variables + source)
+
+  [PASS] start reachable
+  [PASS] path_a reachable
+  [PASS] path_b reachable
+  [PASS] merge reachable
+  [PASS] no dead ends
+
+5 passed, 0 failed

@@ -1,0 +1,9 @@
+ink-verify — tests/stories/tunnel.ink.json (3 knots, 0 variables + source)
+
+  [PASS] start reachable
+  [PASS] crossing reachable
+  [PASS] after_tunnel reachable
+  [INFO] Skipped 2 compiler-generated nodes (gathers, choice internals). Checked 3 author-written knots.
+  [PASS] no dead ends
+
+4 passed, 0 failed

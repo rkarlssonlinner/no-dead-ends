@@ -1,0 +1,10 @@
+ink-verify — tests/stories/variables.ink.json (4 knots, 2 variables + source)
+
+  [PASS] start reachable
+  [PASS] shop reachable
+  [PASS] cave reachable
+  [PASS] ending reachable
+  [PASS] no dead ends
+  [PASS] gold >= 0
+
+6 passed, 0 failed

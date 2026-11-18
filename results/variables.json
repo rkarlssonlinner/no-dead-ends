@@ -1,0 +1,44 @@
+{
+  "story": "tests/stories/variables.ink.json",
+  "knots": 4,
+  "variables": [
+    "gold",
+    "has_key"
+  ],
+  "has_source": true,
+  "coverage": 100.0,
+  "edges_resolved": 9,
+  "edges_dropped": 0,
+  "results": [
+    {
+      "name": "start reachable",
+      "type": "reachable",
+      "passed": true
+    },
+    {
+      "name": "shop reachable",
+      "type": "reachable",
+      "passed": true
+    },
+    {
+      "name": "cave reachable",
+      "type": "reachable",
+      "passed": true
+    },
+    {
+      "name": "ending reachable",
+      "type": "reachable",
+      "passed": true
+    },
+    {
+      "name": "no dead ends",
+      "type": "no_dead_ends",
+      "passed": true
+    },
+    {
+      "name": "gold >= 0",
+      "type": "invariant",
+      "passed": true
+    }
+  ]
+}

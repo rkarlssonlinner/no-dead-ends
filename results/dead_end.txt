@@ -1,0 +1,11 @@
+ink-verify — tests/stories/dead_end.ink.json (3 knots, 1 variables + source)
+
+  [PASS] start reachable
+  [PASS] stuck reachable
+  [FAIL] ending reachable
+         'ending' has 2 incoming edges but no verified path — graph chain may be incomplete (review manually)
+  [FAIL] no dead ends
+         Dead end at 'stuck'
+  [PASS] gold >= 0
+
+3 passed, 2 failed

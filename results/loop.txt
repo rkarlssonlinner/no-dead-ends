@@ -1,0 +1,7 @@
+ink-verify — tests/stories/loop.ink.json (2 knots, 0 variables + source)
+
+  [PASS] hub reachable
+  [PASS] fallback reachable
+  [PASS] no dead ends
+
+3 passed, 0 failed

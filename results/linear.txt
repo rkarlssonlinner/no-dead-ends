@@ -1,0 +1,8 @@
+ink-verify — tests/stories/linear.ink.json (3 knots, 0 variables + source)
+
+  [PASS] start reachable
+  [PASS] middle reachable
+  [PASS] ending reachable
+  [PASS] no dead ends
+
+4 passed, 0 failed

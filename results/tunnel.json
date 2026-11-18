@@ -1,0 +1,36 @@
+{
+  "story": "tests/stories/tunnel.ink.json",
+  "knots": 3,
+  "variables": [],
+  "has_source": true,
+  "coverage": 100.0,
+  "edges_resolved": 9,
+  "edges_dropped": 0,
+  "results": [
+    {
+      "name": "start reachable",
+      "type": "reachable",
+      "passed": true
+    },
+    {
+      "name": "crossing reachable",
+      "type": "reachable",
+      "passed": true
+    },
+    {
+      "name": "after_tunnel reachable",
+      "type": "reachable",
+      "passed": true
+    },
+    {
+      "name": "2 internal nodes",
+      "type": "_info",
+      "passed": true
+    },
+    {
+      "name": "no dead ends",
+      "type": "no_dead_ends",
+      "passed": true
+    }
+  ]
+}
