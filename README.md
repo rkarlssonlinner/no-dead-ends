@@ -31,8 +31,6 @@ bash scripts/verify_examples.sh
 
 Results are written to `results/`. The committed results match what the script produces.
 
-The `.tale` is the same package your editor builds when you save or publish — `story/main.ink.json` inside the ZIP. No extra compile step.
-
 ## Workflow
 
 ```
