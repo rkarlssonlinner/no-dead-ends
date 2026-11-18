@@ -227,24 +227,25 @@ def _check_no_dead_ends(em: EncodedModel, name: str) -> Verdict:
 
 def _check_invariant(em: EncodedModel, name: str, expr_text: str) -> Verdict:
     sym_expr = parse_property_expr(expr_text)
-    violation_clauses = []
+    violation_clauses = {}
     for nid in em.graph.nodes:
         if nid in em.node_vars:
             expr_z3 = sym_to_z3(sym_expr, em.node_vars[nid])
             from ink_verify.z3_encoder import _coerce_bool
-            violation_clauses.append(z3.And(em.reach[nid], z3.Not(_coerce_bool(expr_z3))))
+            violation_clauses[nid] = z3.And(em.reach[nid], z3.Not(_coerce_bool(expr_z3)))
 
     if not violation_clauses:
         return Verdict(name, "invariant", True)
 
     em.solver.push()
-    em.solver.add(z3.Or(*violation_clauses))
+    em.solver.add(z3.Or(*violation_clauses.values()))
     result = em.solver.check()
     if result == z3.sat:
         path = _extract_path(em)
+        violating_node = _find_violating_node(em, violation_clauses)
         em.solver.pop()
         return Verdict(name, "invariant", False, counterexample=path,
-                       reason=f"Invariant '{expr_text}' violated")
+                       reason=f"Invariant '{expr_text}' violated at '{violating_node}'")
     else:
         em.solver.pop()
         return Verdict(name, "invariant", True)
@@ -312,6 +313,15 @@ def _extract_path(em: EncodedModel) -> list[TraceStep]:
         current = next_node
 
     return path
+
+
+def _find_violating_node(em: EncodedModel, clauses: dict[str, z3.ExprRef]) -> str:
+    """Find which node violates the invariant in the current model."""
+    model = em.solver.model()
+    for nid, clause in clauses.items():
+        if z3.is_true(model.eval(clause, model_completion=True)):
+            return nid
+    return "unknown"
 
 
 def _find_dead_end_node(em: EncodedModel, candidates: list[str]) -> str:
