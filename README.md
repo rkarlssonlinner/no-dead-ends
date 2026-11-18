@@ -14,10 +14,21 @@ Supported inputs by feature:
 
 ```bash
 pip install .
-ink-verify my-story.tale
+ink-verify my-story.tale --source story/
 ```
 
-That's it. ink-verify extracts the compiled story from your `.tale` and checks every knot is reachable, there are no dead ends, and numeric variables stay non-negative.
+Supply both compiled Ink and .ink source for best accuracy. The source corrects variable types that the compiled bytecode loses.
+
+## Reproduce the test results
+
+```bash
+git clone https://github.com/rkarlssonlinner/no-dead-ends
+cd no-dead-ends
+pip install .
+bash scripts/verify_examples.sh
+```
+
+Results are written to `results/`. The committed results match what the script produces.
 
 The `.tale` is the same package your editor builds when you save or publish — `story/main.ink.json` inside the ZIP. No extra compile step.
 
