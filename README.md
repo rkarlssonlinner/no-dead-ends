@@ -2,6 +2,8 @@
 
 Formal verification for Ink interactive fiction. Proves properties across all possible playthroughs using the Z3 SMT solver.
 
+ink-verify works on the compiled Ink JSON that every Ink tool produces — inklecate, inkjs, Inky, ink-unity-integration, and the offtrail editor all output the same format. If you have a `.tale`, `.otproject`, or raw `.ink` files, ink-verify handles those too.
+
 ## Quick start
 
 ```bash
@@ -30,6 +32,21 @@ ink-verify my-story.otproject     # project file (extracts .ink, compiles, verif
 ink-verify story/main.ink.json    # compiled Ink JSON directly
 ink-verify story/                 # directory with .ink files (compiles with inklecate)
 ```
+
+## What counts as input
+
+ink-verify works on **compiled Ink JSON** — the `.ink.json` file that any Ink compiler produces (inklecate, inkjs, Inky, ink-unity-integration). This is the same format regardless of which tool compiled it.
+
+| You have | What to run |
+|----------|-------------|
+| A `.tale` file from the offtrail editor | `ink-verify my-story.tale` |
+| An `.otproject` file | `ink-verify my-story.otproject` |
+| A standalone HTML export directory (from Inky "Export for web") | `ink-verify path/to/my-story.js` — not yet supported; extract the JSON from the JS wrapper first |
+| A compiled `.json` file from inklecate or Inky | `ink-verify story.ink.json` |
+| Raw `.ink` source files (not compiled) | `ink-verify story/` — compiles with inklecate first (must be installed: `npm install -g inklecate`) |
+| A single `.ink` file | `ink-verify my-story.ink` — compiles then verifies |
+
+Raw `.ink` requires inklecate on your PATH. Compiled JSON works without it.
 
 ## What it checks (auto-detect)
 
