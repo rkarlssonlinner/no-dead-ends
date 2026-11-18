@@ -22,6 +22,7 @@ class EvalInterpreter:
     def __init__(self) -> None:
         self.stack: list[SymExpr] = []
         self._in_string_mode = False
+        self._string_parts: list[str] = []
 
     def feed(self, item: object) -> None:
         if isinstance(item, bool):
@@ -42,8 +43,11 @@ class EvalInterpreter:
         elif isinstance(item, str):
             if item == "str":
                 self._in_string_mode = True
+                self._string_parts = []
             elif item == "/str":
                 self._in_string_mode = False
+                text = "".join(self._string_parts)
+                self.stack.append(StringLit(text))
             elif item == "du" and self.stack:
                 self.stack.append(self.stack[-1])
             elif item == "pop" and self.stack:
@@ -51,7 +55,8 @@ class EvalInterpreter:
             elif item in ("out", "nop", "visit"):
                 pass
             elif self._in_string_mode:
-                pass
+                if item.startswith("^"):
+                    self._string_parts.append(item[1:])
             elif item in BINARY_OPS and len(self.stack) >= 2:
                 right = self.stack.pop()
                 left = self.stack.pop()

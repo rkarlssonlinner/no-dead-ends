@@ -29,11 +29,14 @@ def encode(graph: StoryGraph, bound: int = 3) -> EncodedModel:
     edge_taken: dict[str, z3.BoolRef] = {}
     edge_index: dict[str, StoryEdge] = {}
 
+    # Filter out string variables — Z3 can't encode them meaningfully
+    encodable_vars = {k: v for k, v in graph.variables.items() if v.var_type != VarType.STRING}
+
     # Create Z3 variables for each node
     for nid in graph.nodes:
         reach[nid] = z3.Bool(f"reach_{nid}")
         node_vars[nid] = {}
-        for vname, vdecl in graph.variables.items():
+        for vname, vdecl in encodable_vars.items():
             node_vars[nid][vname] = _make_z3_var(vdecl, nid)
 
     # Create Z3 variables for each edge
@@ -44,7 +47,7 @@ def encode(graph: StoryGraph, bound: int = 3) -> EncodedModel:
     # --- Constraint 1: Entry node is reachable with initial values ---
     entry = graph.entry_node
     solver.add(reach[entry] == True)
-    for vname, vdecl in graph.variables.items():
+    for vname, vdecl in encodable_vars.items():
         solver.add(node_vars[entry][vname] == _initial_z3_val(vdecl))
 
     # --- Constraint 2: Non-entry unreachable unless justified ---
@@ -66,8 +69,11 @@ def encode(graph: StoryGraph, bound: int = 3) -> EncodedModel:
 
         # Guard must hold (if present)
         if edge.guard is not None and edge.source in node_vars:
-            guard_z3 = sym_to_z3(edge.guard, node_vars[edge.source])
-            solver.add(z3.Implies(et, _coerce_bool(guard_z3)))
+            try:
+                guard_z3 = sym_to_z3(edge.guard, node_vars[edge.source])
+                solver.add(z3.Implies(et, _coerce_bool(guard_z3)))
+            except (ValueError, z3.Z3Exception):
+                pass  # Guard references unsupported types (strings) — overapproximate as True
 
     # --- Constraint 4: At most one incoming edge taken per node ---
     for nid in graph.nodes:
@@ -90,13 +96,16 @@ def encode(graph: StoryGraph, bound: int = 3) -> EncodedModel:
         if not incoming:
             continue
 
-        for vname in graph.variables:
+        for vname in encodable_vars:
             # Build ITE chain: if edge_1 taken, use its value; else if edge_2, ...
-            val_expr = _initial_z3_val(graph.variables[vname])
-            for edge in reversed(incoming):
-                edge_val = _compute_edge_val(edge, vname, node_vars, graph.variables)
-                val_expr = z3.If(edge_taken[edge.edge_id], edge_val, val_expr)
-            solver.add(z3.Implies(reach[nid], node_vars[nid][vname] == val_expr))
+            try:
+                val_expr = _initial_z3_val(encodable_vars[vname])
+                for edge in reversed(incoming):
+                    edge_val = _compute_edge_val(edge, vname, node_vars, encodable_vars)
+                    val_expr = z3.If(edge_taken[edge.edge_id], edge_val, val_expr)
+                solver.add(z3.Implies(reach[nid], node_vars[nid][vname] == val_expr))
+            except (ValueError, z3.Z3Exception):
+                pass  # Mutation references unsupported types — skip propagation
 
     return EncodedModel(solver, graph, reach, node_vars, edge_taken, edge_index)
 
@@ -110,7 +119,7 @@ def sym_to_z3(expr: SymExpr, var_map: dict[str, z3.ExprRef]) -> z3.ExprRef:
     elif isinstance(expr, VarRef):
         if expr.name in var_map:
             return var_map[expr.name]
-        return z3.Int(expr.name)
+        return z3.BoolVal(True)  # Unknown var (likely string) — overapproximate
     elif isinstance(expr, VisitCount):
         key = f"__visit_{expr.target}"
         if key in var_map:

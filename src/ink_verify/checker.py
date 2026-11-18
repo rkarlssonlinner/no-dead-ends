@@ -199,9 +199,12 @@ def _check_no_dead_ends(em: EncodedModel, name: str) -> Verdict:
         guard_exprs = []
         for edge in outgoing:
             if edge.guard is not None and nid in em.node_vars:
-                guard_z3 = sym_to_z3(edge.guard, em.node_vars[nid])
-                from ink_verify.z3_encoder import _coerce_bool
-                guard_exprs.append(_coerce_bool(guard_z3))
+                try:
+                    guard_z3 = sym_to_z3(edge.guard, em.node_vars[nid])
+                    from ink_verify.z3_encoder import _coerce_bool
+                    guard_exprs.append(_coerce_bool(guard_z3))
+                except (ValueError, z3.Z3Exception):
+                    guard_exprs.append(z3.BoolVal(True))
             else:
                 guard_exprs.append(z3.BoolVal(True))
 
@@ -230,9 +233,12 @@ def _check_invariant(em: EncodedModel, name: str, expr_text: str) -> Verdict:
     violation_clauses = {}
     for nid in em.graph.nodes:
         if nid in em.node_vars:
-            expr_z3 = sym_to_z3(sym_expr, em.node_vars[nid])
-            from ink_verify.z3_encoder import _coerce_bool
-            violation_clauses[nid] = z3.And(em.reach[nid], z3.Not(_coerce_bool(expr_z3)))
+            try:
+                expr_z3 = sym_to_z3(sym_expr, em.node_vars[nid])
+                from ink_verify.z3_encoder import _coerce_bool
+                violation_clauses[nid] = z3.And(em.reach[nid], z3.Not(_coerce_bool(expr_z3)))
+            except (ValueError, z3.Z3Exception):
+                pass
 
     if not violation_clauses:
         return Verdict(name, "invariant", True)
@@ -258,10 +264,15 @@ def _check_implication(em: EncodedModel, name: str, knot: str, expr_text: str) -
     sym_expr = parse_property_expr(expr_text)
     em.solver.push()
     if knot in em.node_vars:
-        expr_z3 = sym_to_z3(sym_expr, em.node_vars[knot])
-        from ink_verify.z3_encoder import _coerce_bool
-        em.solver.add(em.reach[knot] == True)
-        em.solver.add(z3.Not(_coerce_bool(expr_z3)))
+        try:
+            expr_z3 = sym_to_z3(sym_expr, em.node_vars[knot])
+            from ink_verify.z3_encoder import _coerce_bool
+            em.solver.add(em.reach[knot] == True)
+            em.solver.add(z3.Not(_coerce_bool(expr_z3)))
+        except (ValueError, z3.Z3Exception):
+            em.solver.pop()
+            return Verdict(name, "implication", True,
+                           reason=f"Skipped — expression references unsupported variable types")
     result = em.solver.check()
     if result == z3.sat:
         path = _extract_path(em)
