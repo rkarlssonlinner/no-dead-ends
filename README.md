@@ -144,15 +144,34 @@ ink-verify story.ink.json --json
 | `--bound N` | Visit count bound for loops (default: 3) |
 | `--verbose` | Show full counterexample paths |
 
+## Tested on The Intercept
+
+ink-verify has been tested on [The Intercept](https://github.com/inkle/the-intercept) by inkle — their open-source demo story (MIT), compiled with the original C# inklecate (inkVersion 11). Results:
+
+- 100% edge coverage (858 edges resolved, 0 dropped)
+- 30 of 32 top-level knots confirmed reachable (the 2 "unreachable" are Ink helper functions, not story content)
+- 21 variables detected and checked
+- Entry point correctly identified through conditional branching in the initial content
+
+When ink-verify can't fully resolve an internal path (e.g., positional jumps within a knot), it reports a **coverage metric** so you know how much of the story was analyzed:
+
+```
+ink-verify — TheIntercept.json (282 knots, 21 variables)
+  coverage: 100% of edges resolved (0 unresolved — results may be incomplete)
+```
+
+If coverage is below 100%, the unresolved edges are listed as warnings. The results are still valid for the parts that were analyzed — a FAIL is a real problem, a PASS holds for the resolved graph.
+
 ## Supported Ink features
 
-Knots, stitches, diverts, choices (once-only and sticky), fallback choices, global variables and assignments, conditional choices, arithmetic and comparison operators, gather points, tunnels.
+Knots, stitches, diverts, choices (once-only and sticky), fallback choices, global variables and assignments, conditional choices, arithmetic and comparison operators, gather points, tunnels, Ink functions (detected and excluded from reachability).
 
 ## Limitations
 
-- Loops are verified up to a configurable visit bound (default 3)
-- Ink threads (`<-`), lists (`LIST`), external functions, and string operations are not supported
-- Stories with cycles are detected and reported
+- **Compiled JSON only**: works on the bytecode that inklecate/inkjs/Inky produce, not on `.ink` source directly (though it can call inklecate for you). Intra-knot positional jumps in deeply nested stories may map to the parent knot rather than the exact sub-node.
+- **Bounded model checking**: loops are verified up to a configurable visit bound (default 3). Violations that require more visits may be missed.
+- **Not yet supported**: Ink threads (`<-`), lists (`LIST`), external functions, string operations, sequences/cycles.
+- Stories with cycles are detected and reported.
 
 ## Installation
 
