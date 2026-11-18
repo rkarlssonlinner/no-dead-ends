@@ -73,7 +73,9 @@ Raw `.ink` requires inklecate on your PATH. Compiled JSON works without it.
 | No dead ends | Does every reachable non-terminal node have at least one available choice? |
 | Numeric bounds | Do integer variables stay non-negative? |
 
-When a check fails, ink-verify shows the specific path that causes the problem:
+When `.ink` source is available (via `--source` or auto-detected next to the JSON), ink-verify corrects variable types from the source declarations, checks only author-written knots (compiler-generated gathers and choice internals are skipped), and shows file:line locations in failure output. Without source, all top-level knots are checked and variable types are inferred from the compiled bytecode.
+
+When a check fails, ink-verify names the problem. Use `--verbose` to see the full path:
 
 ```
 ink-verify — story.ink.json (5 knots, 2 variables)
@@ -82,12 +84,19 @@ ink-verify — story.ink.json (5 knots, 2 variables)
   [PASS] shop reachable
   [FAIL] no dead ends
          Dead end at 'shop'
-         Path:
-           start  (gold=3)
-           shop  (gold=1)
   [PASS] gold >= 0
 
 3 passed, 1 failed
+```
+
+With `--verbose`, failures include the path and variable values at each step:
+
+```
+  [FAIL] no dead ends
+         Dead end at 'shop'
+         Path:
+           start  (gold=3)
+           shop -> "Buy sword"  (gold=1)
 ```
 
 ## Custom properties
@@ -137,6 +146,10 @@ ink-verify story.ink.json --json
   "story": "story.ink.json",
   "knots": 5,
   "variables": ["gold", "has_key"],
+  "has_source": false,
+  "coverage": 100.0,
+  "edges_resolved": 12,
+  "edges_dropped": 0,
   "results": [
     {"name": "no dead ends", "type": "no_dead_ends", "passed": false,
      "reason": "Dead end at 'shop'",
@@ -150,10 +163,10 @@ ink-verify story.ink.json --json
 
 | Flag | Description |
 |------|-------------|
-| `--properties FILE` | YAML file with custom checks |
+| `-s, --source PATH` | Path to .ink source (directory, .otproject, or .ink file) for accurate variable types and source locations in errors |
+| `-p, --properties FILE` | YAML file with custom checks |
 | `--json` | Structured JSON output |
-| `--bound N` | Visit count bound for loops (default: 3) |
-| `--verbose` | Show full counterexample paths |
+| `-v, --verbose` | Show full counterexample paths |
 
 ## Tested on The Intercept
 
@@ -168,10 +181,10 @@ When ink-verify can't fully resolve an internal path (e.g., positional jumps wit
 
 ```
 ink-verify — TheIntercept.json (282 knots, 21 variables)
-  coverage: 100% of edges resolved (0 unresolved — results may be incomplete)
+  coverage: 97% of edges resolved (12 unresolved — results may be incomplete)
 ```
 
-If coverage is below 100%, the unresolved edges are listed as warnings. The results are still valid for the parts that were analyzed — a FAIL is a real problem, a PASS holds for the resolved graph.
+The coverage line appears only when edges are unresolved. When all edges resolve, it is omitted and results cover the full graph. The results are still valid for the parts that were analyzed — a FAIL is a real problem, a PASS holds for the resolved graph.
 
 ## Real-world example
 
@@ -203,19 +216,18 @@ ink-verify — my-story.tale (40 knots, 9 variables)
 
 - **PASS** — Z3 proved this holds across all possible playthroughs. No exceptions.
 - **FAIL with "no incoming edges"** — provably unreachable. Nothing connects to it. If it's a `c-*` node, ignore it. If it's a knot you wrote, it's orphaned content.
-- **FAIL with "has N incoming edges, review manually"** — the tool can't trace a full path, but edges exist. Usually a parser limitation with deeply nested compiled JSON, not a real problem. Check it yourself.
+- **FAIL with "has N incoming edges but no verified path"** — edges exist but the solver can't trace a full path. Usually a parser limitation with deeply nested compiled JSON, not a real problem. Check it yourself.
 - **FAIL on an invariant** — a specific playthrough violates the condition. Use `--verbose` to see the path and variable values that cause it.
 
 ## Supported Ink features
 
-Knots, stitches, diverts, choices (once-only and sticky), fallback choices, global variables and assignments, conditional choices, arithmetic and comparison operators, gather points, tunnels, Ink functions (detected and excluded from reachability).
+Knots, stitches, diverts, choices (once-only and sticky), fallback choices, global variables and assignments, conditional choices, arithmetic and comparison operators, gather points, tunnels, Ink functions (detected and excluded from reachability when .ink source is provided via `--source`).
 
 ## Limitations
 
 - **Compiled JSON only**: works on the bytecode that inklecate/inkjs/Inky produce, not on `.ink` source directly (though it can call inklecate for you). Intra-knot positional jumps in deeply nested stories may map to the parent knot rather than the exact sub-node.
-- **Bounded model checking**: loops are verified up to a configurable visit bound (default 3). Violations that require more visits may be missed.
+- **No loop bound**: the Z3 model encodes one pass through each path; there is no configurable visit bound yet. Violations that require many loop iterations may be missed.
 - **Not yet supported**: Ink threads (`<-`), lists (`LIST`), external functions, string operations, sequences/cycles.
-- Stories with cycles are detected and reported.
 
 ## Installation
 
@@ -230,6 +242,23 @@ To compile `.ink` source files, install inklecate:
 ```bash
 npm install -g inklecate
 ```
+
+## Comparison with Story Solver
+
+[Story Solver](https://yarnspinner.dev/storysolver/) by the Yarn Spinner team applies the same idea — formal verification of branching narratives — to the Yarn scripting language. This is the equivalent for Ink.
+
+| Feature | No Dead Ends | Story Solver |
+|---------|-------------|-------------|
+| Narrative language | Ink | Yarn |
+| Verification method | SMT solver (Z3) | Automated theorem provers |
+| Reachability checks | Yes | Yes |
+| Dead-end / soft-lock detection | Yes | Yes |
+| Variable bound checking | Yes | Planned |
+| Custom property assertions | Yes (YAML) | Unknown |
+| Counterexample paths | Yes | Unknown |
+| Save-file generation | No | Planned |
+| Open source | Yes (MIT) | Unknown |
+| Status | Prototype | Closed alpha (late 2026) |
 
 ## License
 
