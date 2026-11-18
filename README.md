@@ -1,6 +1,6 @@
 # ink-verify
 
-Formal verification for Ink interactive fiction. Proves properties across all possible playthroughs using the Z3 SMT solver.
+Formal verification for Ink interactive fiction. Proves properties across all possible playthroughs using the Z3 SMT solver. Passes are true negatives. Failures are a mixture of true and false positives for human review.
 
 ink-verify needs both your `.ink` source and the compiled JSON. The source gives accurate variable types (the compiled bytecode loses the difference between strings, booleans, and integers). The compiled JSON gives the runtime graph that Z3 verifies.
 
