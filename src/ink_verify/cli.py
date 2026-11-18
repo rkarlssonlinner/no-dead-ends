@@ -81,7 +81,7 @@ def main(story_path: str, source: str | None, properties: str | None,
     if properties:
         props = load_properties(properties)
     else:
-        props = auto_detect_properties(graph)
+        props = auto_detect_properties(graph, source_index=src_index)
 
     verdicts = check_properties(graph, props, bound)
 
@@ -112,6 +112,9 @@ def _output_human(path: str, graph, verdicts: list[Verdict], verbose: bool,
     passed = 0
     failed = 0
     for v in verdicts:
+        if v.property_type == "_info":
+            click.echo(f"  [INFO] {v.reason}")
+            continue
         if v.passed:
             click.echo(f"  [PASS] {v.name}")
             passed += 1

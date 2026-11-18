@@ -114,14 +114,63 @@ def _arith_op(op: ast.operator) -> str:
 # Auto-detect default properties
 # ---------------------------------------------------------------------------
 
-def auto_detect_properties(graph: StoryGraph) -> list[dict]:
-    """Generate default property checks based on the story graph."""
+def auto_detect_properties(graph: StoryGraph, source_index=None) -> list[dict]:
+    """Generate default property checks based on the story graph.
+
+    When source_index is provided, only check author-written knots and
+    exclude compiler-generated internal nodes and function knots.
+    """
     props: list[dict] = []
 
-    # Check all knots reachable
-    knots = [nid for nid, n in graph.nodes.items() if n.kind in (NodeKind.KNOT, NodeKind.STITCH)]
-    for knot in knots:
-        props.append({"name": f"{knot} reachable", "type": "reachable", "knot": knot})
+    all_nodes = [(nid, n) for nid, n in graph.nodes.items()
+                 if n.kind in (NodeKind.KNOT, NodeKind.STITCH, NodeKind.GATHER)]
+
+    if source_index:
+        author_knots = set(source_index.knots.keys())
+        functions = source_index.functions
+
+        authored = []
+        internal = []
+        for nid, n in all_nodes:
+            top_name = nid.split(".")[0]
+            if top_name in functions:
+                continue
+            if nid in author_knots:
+                authored.append(nid)
+            else:
+                internal.append(nid)
+
+        for knot in authored:
+            props.append({"name": f"{knot} reachable", "type": "reachable", "knot": knot})
+
+        if internal:
+            props.append({
+                "name": f"{len(internal)} internal nodes",
+                "type": "_info",
+                "detail": f"Skipped {len(internal)} compiler-generated nodes (gathers, choice internals). "
+                          f"Checked {len(authored)} author-written knots."
+            })
+    else:
+        # No source: check only top-level knots (no dots in name, no c-/g- prefixes)
+        top_level = []
+        sub_nodes = []
+        for nid, n in all_nodes:
+            if "." not in nid and not nid.startswith("__"):
+                top_level.append(nid)
+            else:
+                sub_nodes.append(nid)
+
+        for knot in top_level:
+            props.append({"name": f"{knot} reachable", "type": "reachable", "knot": knot})
+
+        if sub_nodes:
+            props.append({
+                "name": f"{len(sub_nodes)} sub-nodes",
+                "type": "_info",
+                "detail": f"Skipped {len(sub_nodes)} sub-nodes (no source provided). "
+                          f"Checked {len(top_level)} top-level knots. "
+                          f"Use --source for full coverage."
+            })
 
     # No dead ends
     props.append({"name": "no dead ends", "type": "no_dead_ends"})
@@ -159,6 +208,8 @@ def check_properties(
             verdicts.append(_check_invariant(em, name, prop["expr"]))
         elif ptype == "implication":
             verdicts.append(_check_implication(em, name, prop["if_knot"], prop["then_expr"]))
+        elif ptype == "_info":
+            verdicts.append(Verdict(name, "_info", True, reason=prop.get("detail", "")))
         else:
             verdicts.append(Verdict(name, ptype, False, reason=f"Unknown property type: {ptype}"))
 
