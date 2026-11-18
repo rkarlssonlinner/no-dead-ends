@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-11-18 (session 2)
+
+Verified Intercept claims against actual .ink source (GitHub raw). Found:
+- `forceful`: true positive (12 unchecked `lower()` calls, starts at 0)
+- `evasive`: false positive (never decremented — encoder soundness bug)
+- Numbers corrected from 46/17 to 45/18
+
+Updated README and community post (local-dev/note.md):
+- Explicit breakdown table for all 18 failures
+- User-facing language ("checked 60, cleared 45, narrowed to 18") instead of jargon
+- Added value proposition to intro paragraph
+- Community post shortened to essentials
+
+Audited all tracked files for private/secret content — clean.
+
+Files changed: `README.md`, `local-dev/note.md` (gitignored)
+
 ## 2026-11-18
 
 README audit against source code. Fixed 10 inaccuracies:
