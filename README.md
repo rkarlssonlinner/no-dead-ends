@@ -4,16 +4,27 @@ Formal verification for Ink interactive fiction. Proves properties across all po
 
 ink-verify needs both your `.ink` source and the compiled JSON. The source gives accurate variable types (the compiled bytecode loses the difference between strings, booleans, and integers). The compiled JSON gives the runtime graph that Z3 verifies.
 
-Every Ink tool produces the same compiled JSON — inklecate, Inky, inkjs, ink-unity-integration. ink-verify can also extract stories from Offtrail Tales `.tale` and `.otproject` packages.
-
 ## Quick start
+
+If you have a directory with `.ink` files:
 
 ```bash
 pip install .
-ink-verify my-story.tale --source story/
+ink-verify story/
 ```
 
-The `--source` flag points to your `.ink` files. Always supply both.
+If you have compiled JSON (from inklecate, Inky, inkjs, or ink-unity-integration), point `--source` to your `.ink` files:
+
+```bash
+ink-verify story.ink.json --source story/
+```
+
+Offtrail Tales packages work too:
+
+```bash
+ink-verify my-story.tale --source story/
+ink-verify my-story.otproject
+```
 
 ## Reproduce the test results
 
